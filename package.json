@@ -11,13 +11,14 @@
     "url": "https://github.com/FruitieX/purescript-ws.git"
   },
   "dependencies": {
-    "ws": "^4.0.0"
+    "ws": "^7.4.5"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "FruitieX",
-  "contributors": ["shaunplee"],
+  "contributors": [
+    "shaunplee"
+  ],
   "license": "MIT"
 }

@@ -109,6 +109,17 @@ onServerError ::
   Effect Unit
 onServerError server callback = runEffectFn2 onServerError_ server (mkEffectFn1 callback)
 
+foreign import closeServer_ :: EffectFn2 WebSocketServer (Effect Unit) Unit
+
+closeServer :: WebSocketServer -> Effect Unit -> Effect Unit
+closeServer server callback = runEffectFn2 closeServer_ server callback
+
+foreign import onServerClose_ ::
+  EffectFn2 WebSocketServer (Effect Unit) Unit
+
+onServerClose :: WebSocketServer -> Effect Unit -> Effect Unit
+onServerClose server callback = runEffectFn2 onServerClose_ server callback
+
 foreign import onMessage_ ::
   EffectFn2
     WebSocketConnection
