@@ -2,5 +2,7 @@ let conf = ./spago.dhall
 
 in      conf
     //  { sources = conf.sources # [ "test/**/*.purs" ]
-        , dependencies = conf.dependencies # [ "maybe", "node-http", "spec" ]
+        , dependencies =
+              conf.dependencies
+            # [ "aff", "console", "maybe", "node-http", "spec", "web-socket" ]
         }

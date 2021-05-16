@@ -12,9 +12,7 @@ to generate this file without the comments in this block.
 -}
 { name = "ws"
 , dependencies =
-  [ "aff"
-  , "console"
-  , "effect"
+  [ "effect"
   , "exceptions"
   , "newtype"
   , "node-http"
@@ -24,5 +22,5 @@ to generate this file without the comments in this block.
   , "typelevel-prelude"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+, sources = [ "src/**/*.purs" ]
 }
