@@ -12,7 +12,8 @@ to generate this file without the comments in this block.
 -}
 { name = "ws"
 , dependencies =
-  [ "console"
+  [ "aff"
+  , "console"
   , "effect"
   , "exceptions"
   , "newtype"
