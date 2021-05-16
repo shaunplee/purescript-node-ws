@@ -1,7 +1,10 @@
 # purescript-ws
 
-Low-level PureScript bindings for 'ws' library. Currently only contains
-WebSocket server functionality.
+Low-level PureScript bindings for [`ws`](https://github.com/websockets/ws) library.
+Currently only contains WebSocket server functionality and basic client functionality
+patterned after
+[purescript-web-socket](https://github.com/purescript-web/purescript-web-socket).
+Like `ws`, this library is to be used on Node, not in the browser.
 
 Sample usage in [example/](/example/) directory.
 
@@ -20,4 +23,3 @@ library.
 
 - Force user to supply `WebSocketConnection` event handlers in
   `createWebSocketServer*` functions
-- Implement WebSocketClient bindings to make this usable also as a client library
