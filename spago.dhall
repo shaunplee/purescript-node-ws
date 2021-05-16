@@ -12,14 +12,19 @@ to generate this file without the comments in this block.
 -}
 { name = "ws"
 , dependencies =
-  [ "effect"
+  [ "arraybuffer-types"
+  , "effect"
+  , "enums"
   , "exceptions"
+  , "maybe"
   , "newtype"
   , "node-http"
+  , "partial"
   , "prelude"
   , "psci-support"
   , "record"
   , "typelevel-prelude"
+  , "web-file"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]

@@ -4,5 +4,5 @@ in      conf
     //  { sources = conf.sources # [ "test/**/*.purs" ]
         , dependencies =
               conf.dependencies
-            # [ "aff", "console", "maybe", "node-http", "spec", "web-socket" ]
+            # [ "aff", "console", "datetime", "maybe", "node-http", "spec" ]
         }
