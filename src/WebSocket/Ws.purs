@@ -3,7 +3,15 @@ module WebSocket.Ws where
 import Prelude
 import Effect (Effect)
 import Effect.Exception (Error)
-import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn2, runEffectFn3)
+import Effect.Uncurried
+  ( EffectFn1
+  , EffectFn2
+  , EffectFn3
+  , mkEffectFn1
+  , mkEffectFn2
+  , runEffectFn2
+  , runEffectFn3
+  )
 import Data.Newtype (class Newtype)
 import Record (insert)
 import Data.Symbol (SProxy(..))
@@ -24,6 +32,15 @@ derive instance newtypeWSM :: Newtype WebSocketMessage _
 
 -- | The effect associated with using the WebSocket module
 foreign import data WS :: Effect
+
+newtype Protocol
+  = Protocol String
+
+derive newtype instance eqProtocol :: Eq Protocol
+
+derive newtype instance ordProtocol :: Ord Protocol
+
+derive instance newtypeProtocol :: Newtype Protocol _
 
 -- TODO: more options from:
 -- https://github.com/websockets/ws/blob/master/doc/ws.md
@@ -109,14 +126,35 @@ onServerError ::
   Effect Unit
 onServerError server callback = runEffectFn2 onServerError_ server (mkEffectFn1 callback)
 
+foreign import onHeaders_ ::
+  EffectFn2
+    WebSocketServer
+    (EffectFn2 (Array String) Request Unit)
+    Unit
+
+-- | Attaches a headers event handler to a WebSocketServer, where the
+-- | headers event is emitted before the response headers are written
+-- | to the socket as part of the handshake. This allows you to
+-- | inspect/modify the headers before they are sent
+onHeaders ::
+  WebSocketServer ->
+  (Array String -> Request -> Effect Unit) ->
+  Effect Unit
+onHeaders server callback = runEffectFn2 onHeaders_ server (mkEffectFn2 callback)
+
 foreign import closeServer_ :: EffectFn2 WebSocketServer (Effect Unit) Unit
 
+-- | Shut down the server and run the callback when the shut down is
+-- | complete. If an external HTTP server is used, it must be closed
+-- | manually.
 closeServer :: WebSocketServer -> Effect Unit -> Effect Unit
 closeServer server callback = runEffectFn2 closeServer_ server callback
 
 foreign import onServerClose_ ::
   EffectFn2 WebSocketServer (Effect Unit) Unit
 
+-- | Attaches a close event handler to a WebSocketServer, where the
+-- | close event is emitted when the server closes.
 onServerClose :: WebSocketServer -> Effect Unit -> Effect Unit
 onServerClose server callback = runEffectFn2 onServerClose_ server callback
 

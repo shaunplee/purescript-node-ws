@@ -19,6 +19,14 @@ exports.onServerClose_ = function(wss, callback) {
   wss.on('close', callback);
 };
 
+exports.onListening_ = function(wss, callback) {
+  wss.on('listening', callback);
+};
+
+exports.onHeaders_ = function(wss, callback) {
+  wss.on('headers', callback);
+};
+
 exports.closeServer_ = function(wss, callback) {
   wss.close(callback);
 };
