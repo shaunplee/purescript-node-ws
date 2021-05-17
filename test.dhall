@@ -4,5 +4,12 @@ in      conf
     //  { sources = conf.sources # [ "test/**/*.purs" ]
         , dependencies =
               conf.dependencies
-            # [ "aff", "console", "datetime", "maybe", "node-http", "spec" ]
+            # [ "aff"
+              , "console"
+              , "datetime"
+              , "maybe"
+              , "node-http"
+              , "refs"
+              , "spec"
+              ]
         }

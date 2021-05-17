@@ -7,6 +7,7 @@ import Effect.Aff (Aff, Milliseconds(..), bracket, delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Exception (Error)
+import Effect.Ref as Ref
 import Node.HTTP as HTTP
 import Test.Spec (around_, describe, it, pending)
 import Test.Spec.Assertions (shouldEqual)
@@ -82,6 +83,7 @@ main =
               $ do
                   let
                     message = "Hello world!"
+                  sentinel <- liftEffect $ Ref.new false
                   connection <- liftEffect $ WsClient.create echoAddress [] {}
                   liftEffect
                     $ WsClient.onError connection (\err -> log $ "error: " <> show err)
@@ -91,17 +93,22 @@ main =
                             log "connection opened"
                             WsClient.sendString connection message
                             log $ "message \"" <> message <> "\" sent"
+                            Ref.write true sentinel
                         )
                   delay (Milliseconds 1000.0)
-                  pure unit
+                  sendComplete <- liftEffect $ Ref.read sentinel
+                  shouldEqual sendComplete true
             it "can receive a message from the websocket.org echo server"
               $ do
                   let
                     message = "Hello world!"
                   connection <- liftEffect $ WsClient.create echoAddress [] {}
+                  messageReceived <- liftEffect $ Ref.new ""
                   liftEffect
                     $ WsClient.onMessage connection
-                        ( \(WS.WebSocketMessage msg) -> log $ "received: " <> msg
+                        ( \(WS.WebSocketMessage msg) -> do
+                            log $ "message \"" <> message <> "\" received"
+                            Ref.write msg messageReceived
                         )
                   liftEffect
                     $ WsClient.onError connection (\err -> log $ "error: " <> show err)
@@ -113,7 +120,8 @@ main =
                             log $ "message \"" <> message <> "\" sent"
                         )
                   delay (Milliseconds 1000.0)
-                  pure unit
+                  received <- liftEffect $ Ref.read messageReceived
+                  shouldEqual message received
           describe "receive messages"
             $ around_
                 (withServer (startServerOnPort 9000 (\_ _ -> log "received message"))) do
