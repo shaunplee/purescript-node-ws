@@ -2,9 +2,8 @@ module Test.Main where
 
 import Prelude
 import Data.Maybe (Maybe(..))
-import Data.Time.Duration (Milliseconds(..))
 import Effect (Effect)
-import Effect.Aff (Aff, bracket, delay, launchAff_)
+import Effect.Aff (Aff, Milliseconds(..), bracket, delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Exception (Error)
@@ -64,10 +63,6 @@ main =
             it "can start server on running Node HTTP server" do
               _ <- startServerOnHTTPServer (\_ _ -> log "received message")
               pure unit
-          describe "receive messages"
-            $ around_
-                (withServer (startServerOnPort 9000 (\_ _ -> log "received message"))) do
-                pending "should receive a message"
         describe "Ws client" do
           let
             echoAddress = "ws://echo.websocket.org"
@@ -119,11 +114,7 @@ main =
                         )
                   delay (Milliseconds 1000.0)
                   pure unit
-
--- it "can receive a message from the websocket.org echo server"
---   $ liftEffect do
---       let
---         message = "Hello world!"
---       connection <-
---         WsClient.create echoAddress [] {}
---       WsClient.sendString connection message
+          describe "receive messages"
+            $ around_
+                (withServer (startServerOnPort 9000 (\_ _ -> log "received message"))) do
+                pending "can roundtrip a message with a local echo server"
