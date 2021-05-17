@@ -4,13 +4,20 @@ import Prelude
 import Data.ArrayBuffer.Types (ArrayBuffer, ArrayView)
 import Effect (Effect)
 import Effect.Exception (Error)
-import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
+import Effect.Uncurried
+  ( EffectFn1
+  , EffectFn2
+  , EffectFn3
+  , mkEffectFn1
+  , mkEffectFn2
+  , runEffectFn2
+  , runEffectFn3
+  )
 import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype)
-import Data.Symbol (SProxy(..))
 import Partial.Unsafe (unsafePartial)
 import Web.File.Blob (Blob)
-import WebSocket.Ws (WebSocketConnection, WebSocketMessage, WS)
+import WebSocket.Ws (WebSocketConnection, WebSocketMessage)
 import WebSocket.BinaryType (BinaryType(..), printBinaryType)
 import WebSocket.ReadyState (ReadyState(..), toEnumReadyState)
 
@@ -29,7 +36,8 @@ derive newtype instance ordProtocol :: Ord Protocol
 
 derive instance newtypeProtocol :: Newtype Protocol _
 
-foreign import createWebSocketConnection_ :: forall options. EffectFn3 String (Array Protocol) options WebSocketConnection
+foreign import createWebSocketConnection_ ::
+  forall options. EffectFn3 String (Array Protocol) options WebSocketConnection
 
 -- | Creates a WebSocketConnection to a given address (URL), Array of
 -- | subprotocols, and `options` see
@@ -41,7 +49,12 @@ create ::
   Array Protocol ->
   { | options } ->
   Effect WebSocketConnection
-create address protocols options = runEffectFn3 createWebSocketConnection_ address protocols options
+create address protocols options =
+  runEffectFn3
+    createWebSocketConnection_
+    address
+    protocols
+    options
 
 foreign import url :: WebSocketConnection -> Effect String
 
