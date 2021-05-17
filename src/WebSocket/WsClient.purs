@@ -14,27 +14,17 @@ import Effect.Uncurried
   , runEffectFn3
   )
 import Data.Maybe (fromJust)
-import Data.Newtype (class Newtype)
 import Partial.Unsafe (unsafePartial)
 import Web.File.Blob (Blob)
-import WebSocket.Ws (WebSocketConnection, WebSocketMessage)
+import WebSocket.Ws (WebSocketConnection, WebSocketMessage, Protocol)
 import WebSocket.BinaryType (BinaryType(..), printBinaryType)
 import WebSocket.ReadyState (ReadyState(..), toEnumReadyState)
-
-newtype Protocol
-  = Protocol String
 
 newtype CloseCode
   = CloseCode Int
 
 newtype CloseReason
   = CloseReason String
-
-derive newtype instance eqProtocol :: Eq Protocol
-
-derive newtype instance ordProtocol :: Ord Protocol
-
-derive instance newtypeProtocol :: Newtype Protocol _
 
 foreign import createWebSocketConnection_ ::
   forall options. EffectFn3 String (Array Protocol) options WebSocketConnection
