@@ -14,38 +14,43 @@ import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
 import WebSocket.Ws as WS
-import WebSocket.WsClient as WsClient
+import WebSocket.WsServer as WsServer
 
+-- import WebSocket.WsClient as WsClient
 startServerOnPort ::
   Int ->
   (WS.WebSocketConnection -> HTTP.Request -> Effect Unit) ->
-  Aff WS.WebSocketServer
+  Aff WsServer.WebSocketServer
 startServerOnPort p handleConnection =
   liftEffect do
-    server <- WS.createWebSocketServerWithPort (WS.Port p) {} (\_ -> log "server started")
-    WS.onConnection server handleConnection
-    WS.onServerError server handleError
+    server <-
+      WsServer.createWebSocketServerWithPort
+        (WsServer.Port p)
+        {}
+        (\_ -> log "server started")
+    WsServer.onConnection server handleConnection
+    WsServer.onServerError server handleError
     pure server
 
 startServerOnHTTPServer ::
   (WS.WebSocketConnection -> HTTP.Request -> Effect Unit) ->
-  Aff WS.WebSocketServer
+  Aff WsServer.WebSocketServer
 startServerOnHTTPServer handleConnection =
   liftEffect do
     server <- HTTP.createServer (\_ _ -> log "dummy")
     HTTP.listen server
       { backlog: Nothing, hostname: "localhost", port: 9001 }
       (pure unit)
-    ws <- WS.createWebSocketServerWithServer server {}
-    WS.onConnection ws handleConnection
-    WS.onServerError ws handleError
-    WS.onServerClose ws (HTTP.close server (log "node server closed"))
+    ws <- WsServer.createWebSocketServerWithServer server {}
+    WsServer.onConnection ws handleConnection
+    WsServer.onServerError ws handleError
+    WsServer.onServerClose ws (HTTP.close server (log "node server closed"))
     pure ws
 
-stopServer :: WS.WebSocketServer -> Aff Unit
-stopServer ws = liftEffect $ WS.closeServer ws (log "server closed")
+stopServer :: WsServer.WebSocketServer -> Aff Unit
+stopServer ws = liftEffect $ WsServer.closeServer ws (log "server closed")
 
-withServer :: Aff WS.WebSocketServer -> Aff Unit -> Aff Unit
+withServer :: Aff WsServer.WebSocketServer -> Aff Unit -> Aff Unit
 withServer ws action = bracket ws stopServer (const action)
 
 handleError :: Error -> Effect Unit
@@ -61,13 +66,13 @@ main =
           describe "smoke test" do
             it "can create a WebSocket connection to the websocket.org echo server"
               $ liftEffect do
-                  _ <- WsClient.create echoAddress [] {}
+                  _ <- WS.create echoAddress [] {}
                   pure unit
           describe "connection properties tests" do
             it "can get the url from a WebSocketConnection"
               $ liftEffect do
-                  connection <- WsClient.create echoAddress [] {}
-                  address <- WsClient.url connection
+                  connection <- WS.create echoAddress [] {}
+                  address <- WS.url connection
                   address `shouldEqual` echoAddress
         -- describe "communications tests" do
         --   it "can send a message to the websocket.org echo server"
@@ -75,13 +80,13 @@ main =
         --         let
         --           message = "Hello world!"
         --         sentinel <- liftEffect $ Ref.new false
-        --         connection <- liftEffect $ WsClient.create echoAddress [] {}
+        --         connection <- liftEffect $ WS.create echoAddress [] {}
         --         liftEffect
-        --           $ WsClient.onError connection (\err -> log $ "error: " <> show err)
-        --         liftEffect $ WsClient.onOpen connection
+        --           $ WS.onError connection (\err -> log $ "error: " <> show err)
+        --         liftEffect $ WS.onOpen connection
         --           $ do
         --               log "connection opened"
-        --               WsClient.sendString connection message
+        --               WS.sendString connection message
         --               log $ "message \"" <> message <> "\" sent"
         --               Ref.write true sentinel
         --         delay (Milliseconds 1500.0)
@@ -91,21 +96,21 @@ main =
         --     $ do
         --         let
         --           message = "Hello world!"
-        --         connection <- liftEffect $ WsClient.create echoAddress [] {}
+        --         connection <- liftEffect $ WS.create echoAddress [] {}
         --         messageReceived <- liftEffect $ Ref.new ""
         --         liftEffect
-        --           $ WsClient.onMessage connection
+        --           $ WS.onMessage connection
         --               ( \(WS.WebSocketMessage msg) -> do
         --                   log $ "message \"" <> message <> "\" received"
         --                   Ref.write msg messageReceived
         --               )
         --         liftEffect
-        --           $ WsClient.onError connection (\err -> log $ "error: " <> show err)
+        --           $ WS.onError connection (\err -> log $ "error: " <> show err)
         --         liftEffect
-        --           $ WsClient.onOpen connection
+        --           $ WS.onOpen connection
         --               ( do
         --                   log "connection opened"
-        --                   WsClient.sendString connection message
+        --                   WS.sendString connection message
         --                   log $ "message \"" <> message <> "\" sent"
         --               )
         --         delay (Milliseconds 1500.0)
@@ -115,7 +120,7 @@ main =
           describe "smoke test" do
             it "can start server on port 9000" do
               server <- startServerOnPort 9000 (\_ _ -> log "received message")
-              liftEffect $ WS.closeServer server (log "server closed")
+              liftEffect $ WsServer.closeServer server (log "server closed")
               pure unit
             it "can start server on running Node HTTP server" do
               _ <- startServerOnHTTPServer (\_ _ -> log "received message")
@@ -129,26 +134,26 @@ main =
                     startServerOnPort 9002
                       ( \conn _ ->
                           WS.onMessage conn
-                            (\msg -> WS.sendMessage conn msg)
+                            (\(WS.WebSocketMessage msg) -> WS.sendString conn msg)
                       )
-                  connection <- liftEffect $ WsClient.create "ws://localhost:9002" [] {}
+                  connection <- liftEffect $ WS.create "ws://localhost:9002" [] {}
                   msgRef <- liftEffect $ Ref.new ""
                   liftEffect
-                    $ WsClient.onMessage connection
+                    $ WS.onMessage connection
                         ( \(WS.WebSocketMessage msg) -> do
-                            log $ "message \"" <> message <> "\" received"
+                            log $ "message \"" <> msg <> "\" received"
                             Ref.write msg msgRef
                         )
                   liftEffect
-                    $ WsClient.onError connection (\err -> log $ "error: " <> show err)
+                    $ WS.onError connection (\err -> log $ "error: " <> show err)
                   liftEffect
-                    $ WsClient.onOpen connection
+                    $ WS.onOpen connection
                         ( do
                             log "connection opened"
-                            WsClient.sendString connection message
+                            WS.sendString connection message
                             log $ "message \"" <> message <> "\" sent"
                         )
                   delay (Milliseconds 1000.0)
                   received <- liftEffect $ Ref.read msgRef
-                  liftEffect $ WS.closeServer server (log "server closed")
+                  liftEffect $ WsServer.closeServer server (log "server closed")
                   shouldEqual message received
