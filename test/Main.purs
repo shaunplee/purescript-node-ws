@@ -16,7 +16,6 @@ import Test.Spec.Runner (runSpec)
 import WebSocket.Ws as WS
 import WebSocket.WsServer as WsServer
 
--- import WebSocket.WsClient as WsClient
 startServerOnPort ::
   Int ->
   (WS.WebSocketConnection -> HTTP.Request -> Effect Unit) ->
