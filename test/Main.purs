@@ -133,15 +133,33 @@ main =
                     startServerOnPort 9002
                       ( \conn _ ->
                           WS.onMessage conn
-                            (\(WS.WebSocketMessage msg) -> WS.sendString conn msg)
+                            ( case _ of
+                                (WS.WebSocketStringMessage msg) ->
+                                  WS.sendString
+                                    conn
+                                    msg
+                                (WS.WebSocketBinaryBlobMessage msg) ->
+                                  WS.sendBlob
+                                    conn
+                                    msg
+                                (WS.WebSocketBinaryArrayBufferMessage msg) ->
+                                  WS.sendArrayBuffer
+                                    conn
+                                    msg
+                            )
                       )
                   connection <- liftEffect $ WS.create "ws://localhost:9002" [] {}
                   msgRef <- liftEffect $ Ref.new ""
                   liftEffect
                     $ WS.onMessage connection
-                        ( \(WS.WebSocketMessage msg) -> do
-                            log $ "message \"" <> msg <> "\" received"
-                            Ref.write msg msgRef
+                        ( case _ of
+                            (WS.WebSocketStringMessage msg) -> do
+                              log $ "message \"" <> msg <> "\" received"
+                              Ref.write msg msgRef
+                            (WS.WebSocketBinaryBlobMessage _) -> do
+                              log $ "binary blob message received"
+                            (WS.WebSocketBinaryArrayBufferMessage _) -> do
+                              log $ "binary array buffer message received"
                         )
                   liftEffect
                     $ WS.onError connection (\err -> log $ "error: " <> show err)

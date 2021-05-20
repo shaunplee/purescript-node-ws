@@ -16,6 +16,7 @@ to generate this file without the comments in this block.
   , "effect"
   , "enums"
   , "exceptions"
+  , "foreign"
   , "maybe"
   , "newtype"
   , "node-http"

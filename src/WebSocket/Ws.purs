@@ -15,6 +15,7 @@ import Effect.Uncurried
   , runEffectFn2
   , runEffectFn3
   )
+import Foreign (Foreign, typeOf, unsafeFromForeign)
 import Partial.Unsafe (unsafePartial)
 import Web.File.Blob (Blob)
 import WebSocket.BinaryType (BinaryType(..), printBinaryType)
@@ -22,12 +23,17 @@ import WebSocket.ReadyState (ReadyState, toEnumReadyState)
 
 foreign import data WebSocketConnection :: Type
 
-newtype WebSocketMessage
-  = WebSocketMessage String
+-- TODO: Add support for receiving additional data types
+-- (Array/Number/Object/DataView/TypedArray)
+data WebSocketMessage
+  = WebSocketStringMessage String
+  | WebSocketBinaryBlobMessage Blob
+  | WebSocketBinaryArrayBufferMessage ArrayBuffer
 
-derive newtype instance showWSM :: Show WebSocketMessage
-
-derive instance newtypeWSM :: Newtype WebSocketMessage _
+instance showWSM :: Show WebSocketMessage where
+  show (WebSocketStringMessage s) = "WebSocketMessage " <> s
+  show (WebSocketBinaryBlobMessage _) = "WebSocketMessage <binary blob>"
+  show (WebSocketBinaryArrayBufferMessage _) = "WebSocketMessage <binary arraybuffer>"
 
 -- | The effect associated with using the WebSocket module
 foreign import data WS :: Effect
@@ -114,7 +120,7 @@ foreign import sendImpl :: forall a. WebSocketConnection -> a -> Effect Unit
 foreign import onMessage_ ::
   EffectFn2
     WebSocketConnection
-    (EffectFn1 WebSocketMessage Unit)
+    (EffectFn1 Foreign Unit)
     Unit
 
 -- | Attaches a message event handler to a WebSocketConnection
@@ -122,7 +128,15 @@ onMessage ::
   WebSocketConnection ->
   (WebSocketMessage -> Effect Unit) ->
   Effect Unit
-onMessage ws callback = runEffectFn2 onMessage_ ws (mkEffectFn1 callback)
+onMessage ws callback = runEffectFn2 onMessage_ ws (mkEffectFn1 cb)
+  where
+  cb fd = case typeOf fd of
+    "string" -> callback (WebSocketStringMessage $ unsafeFromForeign fd)
+    _ -> do
+      bt <- getBinaryType ws
+      case bt of
+        Blob -> callback (WebSocketBinaryBlobMessage $ unsafeFromForeign fd)
+        ArrayBuffer -> callback (WebSocketBinaryArrayBufferMessage $ unsafeFromForeign fd)
 
 foreign import onClose_ ::
   EffectFn2
