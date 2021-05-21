@@ -63,6 +63,10 @@ exports.onMessage_ = function(ws, handleMessage) {
   ws.on('message', handleMessage);
 };
 
+exports.onStringMessage_ = function(ws, handleMessage) {
+  ws.on('message', handleMessage);
+};
+
 exports.onOpen_ = function(ws, handleOpen) {
   ws.on('open', handleOpen);
 };

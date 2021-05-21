@@ -138,6 +138,20 @@ onMessage ws callback = runEffectFn2 onMessage_ ws (mkEffectFn1 cb)
         Blob -> callback (WebSocketBinaryBlobMessage $ unsafeFromForeign fd)
         ArrayBuffer -> callback (WebSocketBinaryArrayBufferMessage $ unsafeFromForeign fd)
 
+foreign import onStringMessage_ ::
+  EffectFn2
+    WebSocketConnection
+    (EffectFn1 String Unit)
+    Unit
+
+-- | Attaches a string message event handler to a WebSocketConnection
+-- | Convenience function when you known you don't need to handle binary messages.
+onStringMessage ::
+  WebSocketConnection ->
+  (String -> Effect Unit) ->
+  Effect Unit
+onStringMessage ws callback = runEffectFn2 onStringMessage_ ws (mkEffectFn1 callback)
+
 foreign import onClose_ ::
   EffectFn2
     WebSocketConnection

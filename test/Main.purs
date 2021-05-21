@@ -134,15 +134,10 @@ main =
                   connection <- liftEffect $ WS.create "ws://localhost:9002" [] {}
                   msgRef <- liftEffect $ Ref.new ""
                   liftEffect
-                    $ WS.onMessage connection
-                        ( case _ of
-                            (WS.WebSocketStringMessage msg) -> do
-                              log $ "message \"" <> msg <> "\" received"
-                              Ref.write msg msgRef
-                            (WS.WebSocketBinaryBlobMessage _) -> do
-                              log $ "binary blob message received"
-                            (WS.WebSocketBinaryArrayBufferMessage _) -> do
-                              log $ "binary array buffer message received"
+                    $ WS.onStringMessage connection
+                        ( \msg -> do
+                            log $ "message \"" <> msg <> "\" received"
+                            Ref.write msg msgRef
                         )
                   liftEffect
                     $ WS.onError connection (\err -> log $ "error: " <> show err)
