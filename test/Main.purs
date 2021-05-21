@@ -125,29 +125,12 @@ main =
               _ <- startServerOnHTTPServer (\_ _ -> log "received message")
               pure unit
           describe "receive messages" do
-            it "can roundtrip a message between local client and local echo server"
+            it "can roundtrip a string message between local client and local echo server"
               $ do
                   let
                     message = "Hello world!"
                   server <-
-                    startServerOnPort 9002
-                      ( \conn _ ->
-                          WS.onMessage conn
-                            ( case _ of
-                                (WS.WebSocketStringMessage msg) ->
-                                  WS.sendString
-                                    conn
-                                    msg
-                                (WS.WebSocketBinaryBlobMessage msg) ->
-                                  WS.sendBlob
-                                    conn
-                                    msg
-                                (WS.WebSocketBinaryArrayBufferMessage msg) ->
-                                  WS.sendArrayBuffer
-                                    conn
-                                    msg
-                            )
-                      )
+                    startServerOnPort 9002 echoMessage
                   connection <- liftEffect $ WS.create "ws://localhost:9002" [] {}
                   msgRef <- liftEffect $ Ref.new ""
                   liftEffect
@@ -174,3 +157,12 @@ main =
                   received <- liftEffect $ Ref.read msgRef
                   liftEffect $ WsServer.closeServer server (log "server closed")
                   shouldEqual message received
+
+echoMessage :: WS.WebSocketConnection -> HTTP.Request -> Effect Unit
+echoMessage conn _ =
+  WS.onMessage conn
+    ( case _ of
+        (WS.WebSocketStringMessage msg) -> WS.sendString conn msg
+        (WS.WebSocketBinaryBlobMessage msg) -> WS.sendBlob conn msg
+        (WS.WebSocketBinaryArrayBufferMessage msg) -> WS.sendArrayBuffer conn msg
+    )

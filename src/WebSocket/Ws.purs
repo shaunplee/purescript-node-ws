@@ -23,7 +23,7 @@ import WebSocket.ReadyState (ReadyState, toEnumReadyState)
 
 foreign import data WebSocketConnection :: Type
 
--- TODO: Add support for receiving additional data types
+-- TODO: Add support for receiving additional data types?
 -- (Array/Number/Object/DataView/TypedArray)
 data WebSocketMessage
   = WebSocketStringMessage String
