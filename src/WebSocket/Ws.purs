@@ -97,7 +97,7 @@ getBinaryType ws =
   unsafePartial do
     getBinaryTypeImpl ws
       <#> case _ of
-          "blob" -> Blob
+          "buffer" -> Buffer
           "arraybuffer" -> ArrayBuffer
 
 setBinaryType :: WebSocketConnection -> BinaryType -> Effect Unit
@@ -106,8 +106,8 @@ setBinaryType ws = setBinaryTypeImpl ws <<< printBinaryType
 sendString :: WebSocketConnection -> String -> Effect Unit
 sendString = sendImpl
 
-sendBlob :: WebSocketConnection -> Buffer -> Effect Unit
-sendBlob = sendImpl
+sendBuffer :: WebSocketConnection -> Buffer -> Effect Unit
+sendBuffer = sendImpl
 
 sendArrayBuffer :: WebSocketConnection -> ArrayBuffer -> Effect Unit
 sendArrayBuffer = sendImpl
@@ -135,7 +135,7 @@ onMessage ws callback = runEffectFn2 onMessage_ ws (mkEffectFn1 cb)
     _ -> do
       bt <- getBinaryType ws
       case bt of
-        Blob -> callback (WebSocketBinaryBufferMessage $ unsafeFromForeign fd)
+        Buffer -> callback (WebSocketBinaryBufferMessage $ unsafeFromForeign fd)
         ArrayBuffer -> callback (WebSocketBinaryArrayBufferMessage $ unsafeFromForeign fd)
 
 foreign import onStringMessage_ ::

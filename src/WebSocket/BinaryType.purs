@@ -5,7 +5,7 @@ import Data.Enum (Cardinality(..), class BoundedEnum, defaultPred, defaultSucc, 
 import Data.Maybe (Maybe(..))
 
 data BinaryType
-  = Blob
+  = Buffer
   | ArrayBuffer
 
 derive instance eqBinaryType :: Eq BinaryType
@@ -13,7 +13,7 @@ derive instance eqBinaryType :: Eq BinaryType
 derive instance ordBinaryType :: Ord BinaryType
 
 instance boundedBinaryType :: Bounded BinaryType where
-  bottom = Blob
+  bottom = Buffer
   top = ArrayBuffer
 
 instance enumBinaryType :: Enum BinaryType where
@@ -26,21 +26,21 @@ instance boundedEnumBinaryType :: BoundedEnum BinaryType where
   fromEnum = fromEnumBinaryType
 
 instance showBinaryType :: Show BinaryType where
-  show Blob = "Blob"
+  show Buffer = "Buffer"
   show ArrayBuffer = "ArrayBuffer"
 
 toEnumBinaryType :: Int -> Maybe BinaryType
 toEnumBinaryType = case _ of
-  0 -> Just Blob
+  0 -> Just Buffer
   1 -> Just ArrayBuffer
   _ -> Nothing
 
 fromEnumBinaryType :: BinaryType -> Int
 fromEnumBinaryType = case _ of
-  Blob -> 0
+  Buffer -> 0
   ArrayBuffer -> 1
 
 printBinaryType :: BinaryType -> String
 printBinaryType = case _ of
-  Blob -> "blob"
+  Buffer -> "buffer"
   ArrayBuffer -> "arraybuffer"
