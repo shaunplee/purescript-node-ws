@@ -158,6 +158,6 @@ echoMessage conn _ =
   WS.onMessage conn
     ( case _ of
         (WS.WebSocketStringMessage msg) -> WS.sendString conn msg
-        (WS.WebSocketBinaryBlobMessage msg) -> WS.sendBlob conn msg
+        (WS.WebSocketBinaryBufferMessage msg) -> WS.sendBlob conn msg
         (WS.WebSocketBinaryArrayBufferMessage msg) -> WS.sendArrayBuffer conn msg
     )

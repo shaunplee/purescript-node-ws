@@ -17,22 +17,22 @@ import Effect.Uncurried
   )
 import Foreign (Foreign, typeOf, unsafeFromForeign)
 import Partial.Unsafe (unsafePartial)
-import Web.File.Blob (Blob)
+import Node.Buffer (Buffer)
 import WebSocket.BinaryType (BinaryType(..), printBinaryType)
 import WebSocket.ReadyState (ReadyState, toEnumReadyState)
 
 foreign import data WebSocketConnection :: Type
 
 -- TODO: Add support for receiving additional data types?
--- (Array/Number/Object/DataView/TypedArray)
+-- (Array/Number/Object/TypedArray)
 data WebSocketMessage
   = WebSocketStringMessage String
-  | WebSocketBinaryBlobMessage Blob
+  | WebSocketBinaryBufferMessage Buffer
   | WebSocketBinaryArrayBufferMessage ArrayBuffer
 
 instance showWSM :: Show WebSocketMessage where
   show (WebSocketStringMessage s) = "WebSocketMessage " <> s
-  show (WebSocketBinaryBlobMessage _) = "WebSocketMessage <binary blob>"
+  show (WebSocketBinaryBufferMessage _) = "WebSocketMessage <binary buffer>"
   show (WebSocketBinaryArrayBufferMessage _) = "WebSocketMessage <binary arraybuffer>"
 
 -- | The effect associated with using the WebSocket module
@@ -106,7 +106,7 @@ setBinaryType ws = setBinaryTypeImpl ws <<< printBinaryType
 sendString :: WebSocketConnection -> String -> Effect Unit
 sendString = sendImpl
 
-sendBlob :: WebSocketConnection -> Blob -> Effect Unit
+sendBlob :: WebSocketConnection -> Buffer -> Effect Unit
 sendBlob = sendImpl
 
 sendArrayBuffer :: WebSocketConnection -> ArrayBuffer -> Effect Unit
@@ -135,7 +135,7 @@ onMessage ws callback = runEffectFn2 onMessage_ ws (mkEffectFn1 cb)
     _ -> do
       bt <- getBinaryType ws
       case bt of
-        Blob -> callback (WebSocketBinaryBlobMessage $ unsafeFromForeign fd)
+        Blob -> callback (WebSocketBinaryBufferMessage $ unsafeFromForeign fd)
         ArrayBuffer -> callback (WebSocketBinaryArrayBufferMessage $ unsafeFromForeign fd)
 
 foreign import onStringMessage_ ::

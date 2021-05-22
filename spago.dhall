@@ -19,13 +19,13 @@ to generate this file without the comments in this block.
   , "foreign"
   , "maybe"
   , "newtype"
+  , "node-buffer"
   , "node-http"
   , "partial"
   , "prelude"
   , "psci-support"
   , "record"
   , "typelevel-prelude"
-  , "web-file"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]
