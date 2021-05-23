@@ -5,7 +5,7 @@ import Data.ArrayBuffer.Types (ArrayBuffer, ArrayView)
 import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype)
 import Effect (Effect)
-import Effect.Exception (Error, error)
+import Effect.Exception (Error)
 import Effect.Uncurried
   ( EffectFn1
   , EffectFn2
@@ -132,7 +132,7 @@ onMessage ws callback = runEffectFn2 onMessage_ ws (mkEffectFn1 cb)
   where
   cb fd = case typeOf fd of
     "string" -> callback (WebSocketStringMessage $ unsafeFromForeign fd)
-    otherwise -> do
+    _ -> do
       bt <- getBinaryType ws
       case bt of
         Buffer -> callback (WebSocketBinaryBufferMessage $ unsafeFromForeign fd)
