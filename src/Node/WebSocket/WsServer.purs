@@ -1,4 +1,4 @@
-module WebSocket.WsServer where
+module Node.WebSocket.WsServer where
 
 import Prelude
 import Effect (Effect)
@@ -8,7 +8,7 @@ import Record (insert)
 import Data.Symbol (SProxy(..))
 import Node.HTTP (Request, Server)
 import Type.Row (class Cons, class Lacks, class Union)
-import WebSocket.Ws (Protocol, WebSocketConnection)
+import Node.WebSocket.Ws (Protocol, WebSocketConnection)
 
 -- | The type of a WebSocket server object
 foreign import data WebSocketServer :: Type

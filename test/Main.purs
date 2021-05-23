@@ -13,8 +13,9 @@ import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
-import WebSocket.Ws as WS
-import WebSocket.WsServer as WsServer
+import Node.WebSocket.Ws as WS
+import Node.WebSocket.BinaryType (BinaryType(..))
+import Node.WebSocket.WsServer as WsServer
 
 startServerOnPort ::
   Int ->

@@ -1,5 +1,5 @@
 {
-  "name": "purescript-ws",
+  "name": "purescript-node-ws",
   "version": "0.0.3",
   "description": "",
   "main": "index.js",

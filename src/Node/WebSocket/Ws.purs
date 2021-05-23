@@ -1,4 +1,4 @@
-module WebSocket.Ws where
+module Node.WebSocket.Ws where
 
 import Prelude
 import Data.ArrayBuffer.Types (ArrayBuffer, ArrayView)
@@ -18,8 +18,8 @@ import Effect.Uncurried
 import Foreign (Foreign, typeOf, unsafeFromForeign)
 import Partial.Unsafe (unsafePartial)
 import Node.Buffer (Buffer)
-import WebSocket.BinaryType (BinaryType(..), printBinaryType)
-import WebSocket.ReadyState (ReadyState, toEnumReadyState)
+import Node.WebSocket.BinaryType (BinaryType(..), printBinaryType)
+import Node.WebSocket.ReadyState (ReadyState, toEnumReadyState)
 
 foreign import data WebSocketConnection :: Type
 
