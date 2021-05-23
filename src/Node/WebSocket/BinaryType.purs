@@ -42,5 +42,5 @@ fromEnumBinaryType = case _ of
 
 printBinaryType :: BinaryType -> String
 printBinaryType = case _ of
-  Buffer -> "buffer"
+  Buffer -> "nodebuffer"
   ArrayBuffer -> "arraybuffer"

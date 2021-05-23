@@ -8,9 +8,10 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Exception (Error)
 import Effect.Ref as Ref
+import Node.Buffer as Buf
 import Node.HTTP as HTTP
 import Test.Spec (describe, it)
-import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Assertions (fail, shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
 import Node.WebSocket.Ws as WS
@@ -134,12 +135,7 @@ main =
                     startServerOnPort 9002 echoMessage
                   connection <- liftEffect $ WS.create "ws://localhost:9002" [] {}
                   msgRef <- liftEffect $ Ref.new ""
-                  liftEffect
-                    $ WS.onStringMessage connection
-                        ( \msg -> do
-                            log $ "message \"" <> msg <> "\" received"
-                            Ref.write msg msgRef
-                        )
+                  liftEffect $ WS.onMessage connection $ receiveStringMessage msgRef
                   liftEffect
                     $ WS.onError connection (\err -> log $ "error: " <> show err)
                   liftEffect
@@ -153,12 +149,102 @@ main =
                   received <- liftEffect $ Ref.read msgRef
                   liftEffect $ WsServer.closeServer server (log "server closed")
                   shouldEqual message received
+            it "can roundtrip a Buffer message between local client and local echo server"
+              $ do
+                  let
+                    message = [ 1, 2, 3 ] :: Array Buf.Octet
+                  buf <- liftEffect $ (Buf.fromArray message :: Effect Buf.Buffer)
+                  server <-
+                    startServerOnPort 9003 echoMessage
+                  connection <- liftEffect $ WS.create "ws://localhost:9003" [] {}
+                  liftEffect $ WS.setBinaryType connection Buffer
+                  msgRef <- liftEffect $ Ref.new ([] :: Array Buf.Octet)
+                  liftEffect $ WS.onMessage connection $ receiveBufferMessage msgRef
+                  liftEffect $ WS.onError connection (\err -> log $ "error: " <> show err)
+                  liftEffect
+                    $ WS.onOpen connection
+                        ( do
+                            log "binary connection opened"
+                            WS.setBinaryType connection Buffer
+                            WS.sendBuffer connection buf
+                            log $ "buffer message \"" <> show message <> "\" sent"
+                        )
+                  delay (Milliseconds 1000.0)
+                  received <- liftEffect $ Ref.read msgRef
+                  liftEffect $ WsServer.closeServer server (log "binary server closed")
+                  shouldEqual message received
+            it "can roundtrip an ArrayBuffer message between local client and local echo server"
+              $ do
+                  let
+                    message = [ 1, 2, 3 ] :: Array Buf.Octet
+                  buf <- liftEffect $ (Buf.fromArray message :: Effect Buf.Buffer)
+                  arrBuf <- liftEffect $ Buf.toArrayBuffer buf
+                  server <-
+                    startServerOnPort 9003 echoMessage
+                  connection <- liftEffect $ WS.create "ws://localhost:9003" [] {}
+                  liftEffect $ WS.setBinaryType connection ArrayBuffer
+                  msgRef <- liftEffect $ Ref.new ([] :: Array Buf.Octet)
+                  liftEffect $ WS.onMessage connection $ receiveArrayBufferMessage msgRef
+                  liftEffect $ WS.onError connection (\err -> log $ "error: " <> show err)
+                  liftEffect
+                    $ WS.onOpen connection
+                        ( do
+                            log "binary connection opened"
+                            WS.setBinaryType connection ArrayBuffer
+                            WS.sendArrayBuffer connection arrBuf
+                            log $ "buffer message \"" <> show message <> "\" sent"
+                        )
+                  delay (Milliseconds 1000.0)
+                  received <- liftEffect $ Ref.read msgRef
+                  liftEffect $ WsServer.closeServer server (log "binary server closed")
+                  shouldEqual message received
 
 echoMessage :: WS.WebSocketConnection -> HTTP.Request -> Effect Unit
 echoMessage conn _ =
   WS.onMessage conn
     ( case _ of
         (WS.WebSocketStringMessage msg) -> WS.sendString conn msg
-        (WS.WebSocketBinaryBufferMessage msg) -> WS.sendBlob conn msg
+        (WS.WebSocketBinaryBufferMessage msg) -> do
+          WS.setBinaryType conn Buffer
+          WS.sendBuffer conn msg
         (WS.WebSocketBinaryArrayBufferMessage msg) -> WS.sendArrayBuffer conn msg
     )
+
+receiveStringMessage :: Ref.Ref String -> WS.WebSocketMessage -> Effect Unit
+receiveStringMessage msgRef wsm = case wsm of
+  (WS.WebSocketStringMessage msg) -> do
+    log $ "message \"" <> msg <> "\" received"
+    Ref.write msg msgRef
+  (WS.WebSocketBinaryBufferMessage _) ->
+    fail
+      $ "error: received a Buffer message but expected an ArrayBuffer"
+  (WS.WebSocketBinaryArrayBufferMessage _) ->
+    fail
+      $ "error: received an ArrayBuffer message but expected an ArrayBuffer"
+
+receiveBufferMessage :: Ref.Ref (Array Buf.Octet) -> WS.WebSocketMessage -> Effect Unit
+receiveBufferMessage msgRef wsm = case wsm of
+  (WS.WebSocketStringMessage _) ->
+    fail
+      $ "error: received a String message but expected an ArrayBuffer"
+  (WS.WebSocketBinaryBufferMessage msgBuf) -> do
+    msg <- Buf.toArray msgBuf :: Effect (Array Buf.Octet)
+    log $ "buffer message \"" <> show msg <> "\" received"
+    Ref.write msg msgRef
+  (WS.WebSocketBinaryArrayBufferMessage _) ->
+    fail
+      $ "error: received an ArrayBuffer message but expected an ArrayBuffer"
+
+receiveArrayBufferMessage :: Ref.Ref (Array Buf.Octet) -> WS.WebSocketMessage -> Effect Unit
+receiveArrayBufferMessage msgRef wsm = case wsm of
+  (WS.WebSocketStringMessage _) ->
+    fail
+      $ "error: received a String message but expected an ArrayBuffer"
+  (WS.WebSocketBinaryBufferMessage _) ->
+    fail
+      $ "error: received a Buffer message but expected an ArrayBuffer"
+  (WS.WebSocketBinaryArrayBufferMessage msgArrBuf) -> do
+    msgBuf <- Buf.fromArrayBuffer msgArrBuf :: Effect Buf.Buffer
+    msg <- Buf.toArray msgBuf :: Effect (Array Buf.Octet)
+    log $ "arraybuffer message \"" <> show msg <> "\" received"
+    Ref.write msg msgRef
