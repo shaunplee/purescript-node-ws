@@ -19,6 +19,17 @@ library.
 1. Install `ws` from npm.
 2. Have a look at the tests and the examples
 
+## Testing
+
+Test has a few dependencies not used by the mail library, so these
+dependencies appear in a separate `test.dhall` file. Run the tests with:
+
+```
+spago -x test.dhall test
+```
+
+The tests assume that ports 9000-9003 are available for running local servers.
+
 ## TODO
 
 - Force user to supply `WebSocketConnection` event handlers in
