@@ -21,7 +21,7 @@ library.
 
 ## Testing
 
-Test has a few dependencies not used by the mail library, so these
+Test has a few dependencies not used by the main library, so these
 dependencies appear in a separate `test.dhall` file. Run the tests with:
 
 ```
